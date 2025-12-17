@@ -1,21 +1,24 @@
 {
   "name": "USD Alert",
   "short_name": "USD Alert",
-  "description": "Alertas de cotação do dólar em tempo real",
-  "start_url": "/",
+  "description": "Monitoramento inteligente da cotação do dólar",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#0f172a",
   "theme_color": "#0f172a",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=192&backgroundColor=0f172a",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://api.dicebear.com/7.x/bottts/png?seed=usd-512&size=512&backgroundColor=0f172a",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
