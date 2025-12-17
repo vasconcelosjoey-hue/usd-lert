@@ -1,0 +1,5 @@
+{
+  "name": "USD Alert",
+  "description": "Uma aplicação minimalista para monitorar a cotação do dólar em tempo real com análises inteligentes via Gemini AI.",
+  "requestFramePermissions": []
+}
