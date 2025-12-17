@@ -16,9 +16,8 @@ root.render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Usar './sw.js' em vez de '/sw.js' garante que o script seja resolvido 
-    // em relação à origem atual (subdomínio scf.usercontent.goog) e não à raiz do ai.studio.
-    navigator.serviceWorker.register('./sw.js').catch(err => {
+    // Registro usando o caminho absoluto que será servido a partir da pasta public em produção
+    navigator.serviceWorker.register('/sw.js').catch(err => {
       console.warn('Falha ao registrar Service Worker:', err);
     });
   });
