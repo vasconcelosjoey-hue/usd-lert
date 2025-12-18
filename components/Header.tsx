@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Bell, BellOff, Loader2 } from 'lucide-react';
+import { DollarSign, Bell, BellOff, Loader2, CheckCircle2 } from 'lucide-react';
 import { requestNotificationPermission, getFCMToken, deactivateNotifications } from '../services/firebase';
 
 const Header: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [notificationsActive, setNotificationsActive] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('fcm_token');
-    if (savedToken) setNotificationsActive(true);
+    if (savedToken) {
+      setNotificationsActive(true);
+      console.log("Token ativo encontrado:", savedToken);
+    }
   }, []);
 
   const handleToggleNotifications = async () => {
@@ -17,35 +21,25 @@ const Header: React.FC = () => {
       if (notificationsActive) {
         await deactivateNotifications();
         setNotificationsActive(false);
-        alert('Alertas desativados.');
+        console.log("Notificações desativadas localmente.");
       } else {
         const granted = await requestNotificationPermission();
         if (granted) {
           const token = await getFCMToken();
           if (token) {
             setNotificationsActive(true);
-            alert('Notificações ativadas com sucesso!');
+            setShowSuccess(true);
+            console.log("SUCESSO! Copie este Token para o Firebase Console:");
+            console.log(token);
+            setTimeout(() => setShowSuccess(false), 3000);
           }
         } else {
-          alert('Permissão de notificação negada no navegador.');
+          alert('Permissão negada. Ative as notificações nas configurações do seu navegador.');
         }
       }
     } catch (error: any) {
-      const errorMsg = error.message || '';
-      
-      if (errorMsg.includes('API key not valid') || errorMsg.includes('400')) {
-        alert(
-          "A chave parece correta, mas o Google está bloqueando o acesso.\n\n" +
-          "RESOLUÇÃO:\n" +
-          "1. Vá ao Google Cloud Console > APIs e Serviços > Credenciais.\n" +
-          "2. Clique na sua chave (Browser Key).\n" +
-          "3. Em 'Restrições de API', verifique se a 'Firebase Installations API' e 'Cloud Messaging' estão permitidas.\n" +
-          "4. Em 'Restrições de Aplicativo', verifique se o domínio 'usd-alert.vercel.app' está na lista."
-        );
-      } else {
-        alert('Erro: ' + errorMsg);
-      }
       console.error("Erro completo do Firebase:", error);
+      alert('Erro na configuração. Verifique o console para detalhes.');
     } finally {
       setLoading(false);
     }
@@ -61,19 +55,26 @@ const Header: React.FC = () => {
           <h1 className="text-lg font-black text-slate-900 tracking-tight">USD Alert</h1>
         </div>
         
-        <button 
-          className={`p-2.5 rounded-full transition-all flex items-center justify-center ${notificationsActive ? 'text-accent bg-accent/10 border border-accent/20' : 'bg-slate-50 text-slate-300 border border-transparent'}`}
-          onClick={handleToggleNotifications}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin text-accent" />
-          ) : notificationsActive ? (
-            <Bell className="w-5 h-5" />
-          ) : (
-            <BellOff className="w-5 h-5" />
+        <div className="flex items-center gap-2">
+          {showSuccess && (
+            <span className="text-[10px] font-bold text-emerald-500 animate-pulse flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Token Gerado
+            </span>
           )}
-        </button>
+          <button 
+            className={`p-2.5 rounded-full transition-all flex items-center justify-center ${notificationsActive ? 'text-accent bg-accent/10 border border-accent/20' : 'bg-slate-50 text-slate-300 border border-transparent'}`}
+            onClick={handleToggleNotifications}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-accent" />
+            ) : notificationsActive ? (
+              <Bell className="w-5 h-5" />
+            ) : (
+              <BellOff className="w-5 h-5" />
+            )}
+          </button>
+        </div>
       </div>
     </header>
   );
