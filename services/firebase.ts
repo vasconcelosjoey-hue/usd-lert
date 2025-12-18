@@ -1,8 +1,10 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-// Acesso seguro ao import.meta.env para evitar crashes em ambientes de preview ou SSR
-const getSafeEnv = () => {
+/**
+ * Acessa as variáveis de ambiente de forma segura.
+ */
+const getEnv = () => {
   try {
     return (import.meta as any).env || {};
   } catch (e) {
@@ -10,7 +12,7 @@ const getSafeEnv = () => {
   }
 };
 
-const env = getSafeEnv();
+const env = getEnv();
 
 const firebaseConfig = {
   apiKey: env.VITE_FIREBASE_API_KEY || "PLACEHOLDER",
@@ -29,7 +31,7 @@ if (isConfigured && typeof window !== 'undefined') {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     messaging = getMessaging(app);
   } catch (e) {
-    console.warn("Firebase Messaging não suportado neste navegador.");
+    console.warn("Firebase Messaging não pôde ser inicializado.");
   }
 }
 
@@ -39,7 +41,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     const permission = await Notification.requestPermission();
     return permission === 'granted';
   } catch (error) {
-    console.error("Erro ao solicitar permissão:", error);
+    console.error("Erro ao solicitar permissão de notificação:", error);
     return false;
   }
 };
@@ -48,11 +50,22 @@ export const getFCMToken = async (): Promise<string | null> => {
   if (!messaging || !('serviceWorker' in navigator)) return null;
   
   try {
-    const swUrl = '/firebase-messaging-sw.js';
+    const hostname = window.location.hostname;
+    const isPreview = hostname.endsWith("usercontent.goog") || hostname === "ai.studio";
+    
+    // Usamos caminho relativo 'firebase-messaging-sw.js' em vez de '/...'
+    // para evitar que o navegador tente buscar na raiz do domínio de preview (ai.studio)
+    const swUrl = 'firebase-messaging-sw.js';
     let registration = await navigator.serviceWorker.getRegistration(swUrl);
     
     if (!registration) {
-      registration = await navigator.serviceWorker.register(swUrl);
+      try {
+        registration = await navigator.serviceWorker.register(swUrl);
+      } catch (err) {
+        console.warn("Falha ao registrar SW de mensagens no preview:", err);
+        if (isPreview) return null; // Erro esperado no ambiente de sandbox do AI Studio
+        throw err;
+      }
     }
 
     const token = await getToken(messaging, {
