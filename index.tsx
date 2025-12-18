@@ -16,9 +16,16 @@ root.render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Registro usando o caminho absoluto que será servido a partir da pasta public em produção
+    // Registro do Service Worker principal do PWA
     navigator.serviceWorker.register('/sw.js').catch(err => {
-      console.warn('Falha ao registrar Service Worker:', err);
+      console.warn('Falha ao registrar Service Worker (PWA):', err);
     });
+
+    // Registro do Service Worker do Firebase Messaging apenas em produção
+    if (import.meta.env.PROD) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(err => {
+        console.warn('Falha ao registrar Firebase Messaging Service Worker:', err);
+      });
+    }
   });
 }
