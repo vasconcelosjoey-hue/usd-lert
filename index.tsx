@@ -3,23 +3,29 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-const root = document.getElementById("root");
+const rootElement = document.getElementById("root");
 
-if (!root) {
+if (!rootElement) {
   throw new Error("Root element not found");
 }
 
-ReactDOM.createRoot(root).render(
+// Renderização única com React 18
+const root = ReactDOM.createRoot(rootElement);
+root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
 
+// Registro do Service Worker de forma limpa
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    // Registramos apenas o worker do Firebase que já cuidará do PWA e das mensagens
-    navigator.serviceWorker.register("/firebase-messaging-sw.js", { scope: '/' })
-      .then(reg => console.log("SW registrado com sucesso:", reg.scope))
-      .catch(err => console.warn("Falha ao registrar SW:", err));
+    navigator.serviceWorker.register("/firebase-messaging-sw.js")
+      .then(reg => {
+        console.log("Service Worker registrado com escopo:", reg.scope);
+      })
+      .catch(err => {
+        console.warn("Erro ao registrar Service Worker:", err);
+      });
   });
 }

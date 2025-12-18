@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Bell, BellOff, Loader2, CheckCircle2 } from 'lucide-react';
-import { requestNotificationPermission, getFCMToken, deactivateNotifications } from '../services/firebase';
+import { 
+  DollarSign, 
+  Bell, 
+  BellOff, 
+  Loader2, 
+  CheckCircle2,
+  AlertTriangle
+} from 'lucide-react';
+import { requestNotificationPermission, getFCMToken, deactivateNotifications, isMessagingSupported } from '../services/firebase';
 
 const Header: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [notificationsActive, setNotificationsActive] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [apiError, setApiError] = useState(false);
+  const [supported, setSupported] = useState<boolean | null>(null);
 
   useEffect(() => {
+    isMessagingSupported().then(setSupported);
     const savedToken = localStorage.getItem('fcm_token');
     if (savedToken) {
       setNotificationsActive(true);
@@ -16,7 +26,7 @@ const Header: React.FC = () => {
 
   const handleToggleNotifications = async () => {
     setLoading(true);
-    console.log("Iniciando processo de notificação...");
+    setApiError(false);
     try {
       if (notificationsActive) {
         await deactivateNotifications();
@@ -28,22 +38,29 @@ const Header: React.FC = () => {
           if (token) {
             setNotificationsActive(true);
             setShowSuccess(true);
-            console.log("TOKEN GERADO COM SUCESSO:", token);
             setTimeout(() => setShowSuccess(false), 4000);
-          } else {
-            alert('Não foi possível gerar o identificador de notificações. Tente atualizar a página.');
           }
         } else {
-          alert('Permissão de notificação negada. Verifique as configurações do seu navegador ao lado da barra de endereço.');
+          alert('Permissão negada. Ative as notificações nas configurações do navegador.');
         }
       }
     } catch (error: any) {
-      console.error("Erro no processo de ativação:", error);
-      alert(`Falha na ativação: ${error.message || 'Erro desconhecido'}`);
+      console.error("Erro FCM:", error);
+      if (error.message === "API_NOT_ENABLED" || error.message?.includes('403')) {
+        setApiError(true);
+      } else {
+        alert(`Erro: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  if (supported === false) return (
+    <header className="w-full bg-white border-b border-slate-100 p-2 text-center text-[10px] text-slate-400">
+      Notificações push não suportadas neste navegador.
+    </header>
+  );
 
   return (
     <header className="w-full bg-white/80 backdrop-blur-md border-b border-slate-100 shrink-0 z-50">
@@ -56,21 +73,28 @@ const Header: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2">
+          {apiError && (
+            <div className="flex items-center gap-1.5 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200 animate-pulse">
+              <AlertTriangle className="w-3 h-3 text-amber-500" />
+              <span className="text-[9px] font-bold text-amber-700">Erro 403 / API</span>
+            </div>
+          )}
+
           {showSuccess && (
-            <span className="text-[10px] font-bold text-emerald-500 animate-pulse flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Conectado ao Firebase
+            <span className="text-[10px] font-bold text-accent animate-bounce flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> OK!
             </span>
           )}
+
           <button 
-            className={`p-2.5 rounded-full transition-all flex items-center justify-center ${notificationsActive ? 'text-accent bg-accent/10 border border-accent/20' : 'bg-slate-50 text-slate-300 border border-transparent'}`}
+            className={`p-2.5 rounded-full transition-all flex items-center justify-center shadow-sm ${notificationsActive ? 'text-white bg-accent ring-4 ring-accent/10' : 'bg-slate-50 text-slate-300 border border-slate-200'}`}
             onClick={handleToggleNotifications}
-            disabled={loading}
-            title={notificationsActive ? "Desativar alertas" : "Ativar alertas de preço"}
+            disabled={loading || supported === null}
           >
             {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-accent" />
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : notificationsActive ? (
-              <Bell className="w-5 h-5" />
+              <Bell className="w-5 h-5 fill-current" />
             ) : (
               <BellOff className="w-5 h-5" />
             )}
