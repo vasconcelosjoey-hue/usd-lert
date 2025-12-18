@@ -14,8 +14,10 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'USD Alert';
   const notificationOptions = {
-    body: payload.notification?.body || 'Atualização na cotação do dólar.',
-    icon: 'https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=192'
+    body: payload.notification?.body || 'Nova atualização na cotação do dólar.',
+    icon: 'https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=192&backgroundColor=0f172a',
+    badge: 'https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=96',
+    vibrate: [200, 100, 200]
   };
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
