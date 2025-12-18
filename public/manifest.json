@@ -1,24 +1,20 @@
 {
   "name": "USD Alert",
   "short_name": "USD Alert",
-  "description": "Monitoramento inteligente da cotação do dólar",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
+  "background_color": "#ffffff",
   "theme_color": "#0f172a",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=192&backgroundColor=0f172a",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "https://api.dicebear.com/7.x/bottts/png?seed=usd-512&size=512&backgroundColor=0f172a",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ]
 }

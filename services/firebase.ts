@@ -10,34 +10,38 @@ const firebaseConfig = {
   appId: "YOUR_APP_ID"
 };
 
-// Inicializa o Firebase apenas uma vez
+// Inicializa o Firebase apenas uma vez (Singleton)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 let messaging: Messaging | null = null;
 
-// Inicializa Messaging apenas no navegador
+// Inicializa Messaging apenas no lado do cliente (navegador)
 if (typeof window !== 'undefined') {
   try {
     messaging = getMessaging(app);
   } catch (e) {
-    console.warn("Firebase Messaging não é suportado neste navegador.");
+    console.warn("Firebase Messaging não é suportado neste navegador ou ambiente.");
   }
 }
 
 /**
- * Solicita o token FCM para o dispositivo atual.
+ * Solicita permissão e retorna o token FCM para o dispositivo atual.
  * @returns Promise com o token ou null
  */
 export const requestNotificationToken = async (): Promise<string | null> => {
-  if (!messaging) return null;
+  if (!messaging || !('serviceWorker' in navigator)) return null;
   
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      // Substitua pela sua VAPID Key gerada no console do Firebase (Project Settings > Messaging > Web configuration)
+      // Obtém o registro específico do worker de mensagens
+      const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+      
       const token = await getToken(messaging, {
-        vapidKey: 'YOUR_VAPID_KEY' 
+        vapidKey: 'YOUR_VAPID_KEY', // Gerada no Console do Firebase
+        serviceWorkerRegistration: registration
       });
+      
       return token;
     }
     return null;

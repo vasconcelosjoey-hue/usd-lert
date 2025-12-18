@@ -1,4 +1,4 @@
-// Service Worker nativo para Push Notifications sem dependência de SDK no Worker
+// Service Worker nativo para Push Notifications
 self.addEventListener('push', (event) => {
   if (event.data) {
     try {
@@ -7,15 +7,16 @@ self.addEventListener('push', (event) => {
       const notificationOptions = {
         body: data.notification?.body || 'Nova atualização de cotação disponível.',
         icon: data.notification?.icon || 'https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=192&backgroundColor=0f172a',
-        data: data.data
+        data: data.data,
+        badge: 'https://api.dicebear.com/7.x/bottts/png?seed=usd-badge&size=96'
       };
 
       event.waitUntil(
         self.registration.showNotification(notificationTitle, notificationOptions)
       );
 
-      // Envia mensagem para os clientes ativos (foreground)
-      self.clients.matchAll().then((clients) => {
+      // Envia mensagem para os clientes ativos (foreground) para atualização em tempo real
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
         clients.forEach((client) => {
           client.postMessage({
             type: 'PUSH_RECEIVED',
@@ -39,4 +40,13 @@ self.addEventListener('notificationclick', (event) => {
       return self.clients.openWindow('/');
     })
   );
+});
+
+// Garante que o worker assuma o controle imediatamente sem interferir no fetch (deixando isso para o sw.js principal)
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
 });
