@@ -1,1 +1,1 @@
-// Arquivo removido
+// Removido conforme solicitação do usuário.

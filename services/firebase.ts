@@ -1,34 +1,27 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-const getEnv = () => {
-  try {
-    return (import.meta as any).env || {};
-  } catch (e) {
-    return {};
-  }
-};
-
-const env = getEnv();
-
+// Credenciais enviadas via imagem
 const firebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY || "PLACEHOLDER",
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || "PLACEHOLDER",
-  projectId: env.VITE_FIREBASE_PROJECT_ID || "PLACEHOLDER",
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || "PLACEHOLDER",
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || "PLACEHOLDER",
-  appId: env.VITE_FIREBASE_APP_ID || "PLACEHOLDER"
+  apiKey: "AIzaSyAjawFDBEE9Onf2ebKFAar8C0LmeJcipxs",
+  authDomain: "usd-alert-afd18.firebaseapp.com",
+  projectId: "usd-alert-afd18",
+  storageBucket: "usd-alert-afd18.firebasestorage.app",
+  messagingSenderId: "357822009676",
+  appId: "1:357822009676:web:f2a9246e60806599493fe9"
 };
 
-const isConfigured = firebaseConfig.apiKey !== "PLACEHOLDER";
+// IMPORTANTE: Obtenha sua VAPID Key no Firebase (Configurações > Cloud Messaging > Certificados da Web)
+const VAPID_KEY = "SUA_CHAVE_VAPID_AQUI"; 
+
 let messaging: Messaging | null = null;
 
-if (isConfigured && typeof window !== 'undefined') {
+if (typeof window !== 'undefined') {
   try {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     messaging = getMessaging(app);
   } catch (e) {
-    console.warn("Firebase Messaging não pôde ser inicializado.");
+    console.warn("Firebase Messaging não inicializado.");
   }
 }
 
@@ -38,7 +31,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     const permission = await Notification.requestPermission();
     return permission === 'granted';
   } catch (error) {
-    console.error("Erro ao solicitar permissão de notificação:", error);
+    console.error("Erro na permissão:", error);
     return false;
   }
 };
@@ -47,15 +40,6 @@ export const getFCMToken = async (): Promise<string | null> => {
   if (!messaging || !('serviceWorker' in navigator)) return null;
   
   try {
-    const hostname = window.location.hostname;
-    const isSandbox = hostname.includes("usercontent.goog") || hostname === "ai.studio";
-    
-    if (isSandbox) {
-      console.warn("FCM não disponível em ambiente sandbox.");
-      return null;
-    }
-
-    // Usar caminho estritamente relativo
     const swUrl = './firebase-messaging-sw.js';
     let registration = await navigator.serviceWorker.getRegistration(swUrl);
     
@@ -64,7 +48,7 @@ export const getFCMToken = async (): Promise<string | null> => {
     }
 
     const token = await getToken(messaging, {
-      vapidKey: env.VITE_FIREBASE_VAPID_KEY,
+      vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration
     });
     
@@ -74,7 +58,7 @@ export const getFCMToken = async (): Promise<string | null> => {
     }
     return null;
   } catch (error) {
-    console.error("Erro ao obter token FCM:", error);
+    console.error("Erro FCM:", error);
     return null;
   }
 };
@@ -82,14 +66,9 @@ export const getFCMToken = async (): Promise<string | null> => {
 export const deactivateNotifications = async (): Promise<void> => {
   if (!messaging) return;
   try {
-    const currentToken = localStorage.getItem('fcm_token');
-    if (currentToken) {
-      await deleteToken(messaging);
-      localStorage.removeItem('fcm_token');
-    }
-  } catch (error) {
-    console.error("Erro ao desativar notificações:", error);
-  }
+    await deleteToken(messaging);
+    localStorage.removeItem('fcm_token');
+  } catch (e) {}
 };
 
 export { messaging };
