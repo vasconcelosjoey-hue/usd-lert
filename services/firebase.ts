@@ -34,8 +34,14 @@ export const requestNotificationToken = async (): Promise<string | null> => {
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      // Obtém o registro específico do worker de mensagens
-      const registration = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+      const swUrl = new URL('firebase-messaging-sw.js', window.location.href).href;
+      
+      // Tenta obter registro existente ou registra um novo se necessário
+      let registration = await navigator.serviceWorker.getRegistration(swUrl);
+      
+      if (!registration) {
+        registration = await navigator.serviceWorker.register(swUrl);
+      }
       
       const token = await getToken(messaging, {
         vapidKey: 'YOUR_VAPID_KEY', // Gerada no Console do Firebase
