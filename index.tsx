@@ -16,6 +16,9 @@ ReactDOM.createRoot(root).render(
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js");
+    // Usar caminho relativo direto garante que o browser procure no mesmo domínio/origem da página atual
+    navigator.serviceWorker.register("./sw.js", { scope: "./" })
+      .then(reg => console.log("SW registrado com sucesso:", reg.scope))
+      .catch(err => console.error("Falha ao registrar SW:", err));
   });
 }
