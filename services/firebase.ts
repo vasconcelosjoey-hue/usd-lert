@@ -29,14 +29,23 @@ if (typeof window !== 'undefined') {
  * @returns Promise com o token ou null
  */
 export const requestNotificationToken = async (): Promise<string | null> => {
-  if (!messaging || !('serviceWorker' in navigator)) return null;
+  const isStudioPreview = 
+    window.location.hostname === "ai.studio" || 
+    window.location.hostname.endsWith("usercontent.goog");
+
+  if (!messaging || !('serviceWorker' in navigator) || isStudioPreview) {
+    if (isStudioPreview) {
+      console.warn("Notificações desabilitadas no ambiente de preview.");
+    }
+    return null;
+  }
   
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       const swUrl = new URL('firebase-messaging-sw.js', window.location.href).href;
       
-      // Tenta obter registro existente ou registra um novo se necessário
+      // Tenta obter registro existente
       let registration = await navigator.serviceWorker.getRegistration(swUrl);
       
       if (!registration) {

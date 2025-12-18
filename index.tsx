@@ -14,23 +14,29 @@ ReactDOM.createRoot(root).render(
   </React.StrictMode>
 );
 
+/**
+ * Registro de Service Worker otimizado para evitar erros em ambientes de Sandbox/Preview.
+ */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    // Construindo a URL do SW de forma robusta para o ambiente de preview
-    try {
-      const swUrl = new URL('sw.js', window.location.href).href;
-      
-      navigator.serviceWorker.register(swUrl, { scope: './' })
-        .then(reg => console.log("SW registrado com sucesso:", reg.scope))
+    const isStudioPreview = 
+      window.location.hostname === "ai.studio" || 
+      window.location.hostname.endsWith("usercontent.goog");
+
+    // Registra o SW apenas se não estiver em ambiente de preview e o navegador suportar
+    if (!isStudioPreview) {
+      navigator.serviceWorker.register("./sw.js", { scope: "./" })
+        .then(reg => {
+          console.log("USD Alert: Service Worker registrado com sucesso:", reg.scope);
+        })
         .catch(err => {
-          console.error("Falha ao registrar SW:", err);
-          // Em ambientes de sandbox, o registro de SW pode ser bloqueado por política de segurança
-          if (err.name === 'SecurityError') {
-            console.warn("Registro de Service Worker ignorado devido a restrições do navegador no ambiente de sandbox.");
+          // Ignora erros de segurança comuns em sandboxes, loga outros erros
+          if (err.name !== 'SecurityError') {
+            console.error("USD Alert: Erro ao registrar SW:", err);
           }
         });
-    } catch (e) {
-      console.error("Erro ao preparar registro do SW:", e);
+    } else {
+      console.log("USD Alert: Registro de Service Worker ignorado no ambiente de preview.");
     }
   });
 }
