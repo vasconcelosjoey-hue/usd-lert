@@ -2,7 +2,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAjawFDBEE9Onf2ebKFAar8C0LmeJcipxs",
+  apiKey: "AIzaSyAjawFDBee9Onf2ebKFAar8C0LmeJcipxs", // Corrigido para 'ee' minúsculo
   projectId: "usd-alert-afd18",
   messagingSenderId: "357822009676",
   appId: "1:357822009676:web:f2a9246e60806599493fe9"

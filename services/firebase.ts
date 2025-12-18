@@ -1,10 +1,9 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-// ATENÇÃO: Verifique se esta chave em 'apiKey' é exatamente a "Chave de API da Web" 
-// que aparece em Configurações do Projeto > Geral no seu Firebase.
+// Dados extraídos diretamente da sua imagem do console do Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyAjawFDBEE9Onf2ebKFAar8C0LmeJcipxs",
+  apiKey: "AIzaSyAjawFDBee9Onf2ebKFAar8C0LmeJcipxs", // Corrigido: 'ee' minúsculo conforme sua foto
   authDomain: "usd-alert-afd18.firebaseapp.com",
   projectId: "usd-alert-afd18",
   storageBucket: "usd-alert-afd18.firebasestorage.app",
@@ -12,6 +11,7 @@ const firebaseConfig = {
   appId: "1:357822009676:web:f2a9246e60806599493fe9"
 };
 
+// Esta chave VAPID é gerada em: Configurações do Projeto > Cloud Messaging > Web Push certificates
 const VAPID_KEY = "BNw9RODM3xnMOjfTJ91XA_oNMvFu4lb24pa8ZWd44UHo2Qpbo1Ol7lzXEfof_IWokxf-LWTLWYZEQ98NwE4cj-g"; 
 
 let messaging: Messaging | null = null;
@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     messaging = getMessaging(app);
   } catch (e) {
-    console.error("Erro ao inicializar Firebase:", e);
+    console.error("Falha ao inicializar Firebase:", e);
   }
 }
 
@@ -51,9 +51,8 @@ export const getFCMToken = async (): Promise<string | null> => {
       return token;
     }
     return null;
-  } catch (error) {
-    // Se cair aqui com erro 400, a API Key é inválida
-    console.error("Erro detalhado do Firebase:", error);
+  } catch (error: any) {
+    console.error("Erro no Firebase com a chave:", firebaseConfig.apiKey);
     throw error;
   }
 };
