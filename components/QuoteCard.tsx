@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, RefreshCw, ArrowUpRight, ArrowDownRight, Clock } from 'lucide-react';
 import { ExchangeRate } from '../types';
 
 interface QuoteCardProps {
@@ -12,51 +11,60 @@ interface QuoteCardProps {
 const QuoteCard: React.FC<QuoteCardProps> = ({ data, loading, onRefresh }) => {
   if (!data || loading) {
     return (
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 animate-pulse">
-        <div className="h-4 w-24 bg-slate-100 rounded mb-4" />
-        <div className="h-12 w-48 bg-slate-100 rounded" />
-      </div>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 animate-pulse h-48" />
     );
   }
 
   const isUp = parseFloat(data.pctChange) >= 0;
+  const varBrl = parseFloat(data.varBid);
 
   return (
-    <div className="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group">
-      <div className="absolute top-0 right-0 p-4">
-        <button 
-          onClick={onRefresh}
-          className="p-2 text-slate-400 hover:text-slate-900 transition-all active:rotate-180 duration-500"
-        >
-          <RefreshCw className="w-5 h-5" />
-        </button>
-      </div>
-      
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-slate-500 uppercase tracking-widest">Dólar Comercial</span>
-        <div className="flex items-baseline gap-2">
-          <span className="text-5xl font-black text-slate-900">
-            R$ {parseFloat(data.bid).toFixed(3)}
-          </span>
-          <div className={`flex items-center gap-1 text-sm font-bold px-2 py-0.5 rounded-full ${isUp ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'}`}>
-            {isUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            {data.pctChange}%
+    <div className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-200/40 border border-slate-50 relative overflow-hidden">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Dólar Comercial (Compra)</span>
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
+              R$ {parseFloat(data.bid).toFixed(3)}
+            </h2>
+            <div className={`flex items-center gap-0.5 text-xs font-bold px-1.5 py-0.5 rounded-md ${isUp ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'}`}>
+              {isUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+              {data.pctChange}%
+            </div>
           </div>
         </div>
-        <p className="text-xs text-slate-400 mt-4">
-          Última atualização: {new Date(data.create_date).toLocaleTimeString('pt-BR')}
-        </p>
+        <button 
+          onClick={onRefresh}
+          className="p-1.5 text-slate-300 hover:text-slate-900 transition-colors"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-accent' : ''}`} />
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-slate-50">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-50/50 rounded-xl border border-slate-100">
         <div>
-          <span className="block text-xs text-slate-400 uppercase">Mínima</span>
-          <span className="font-semibold text-slate-700">R$ {parseFloat(data.low).toFixed(3)}</span>
+          <span className="text-[9px] text-slate-400 uppercase font-bold block">Venda (Ask)</span>
+          <span className="text-sm font-bold text-slate-700">R$ {parseFloat(data.ask).toFixed(3)}</span>
         </div>
         <div>
-          <span className="block text-xs text-slate-400 uppercase">Máxima</span>
-          <span className="font-semibold text-slate-700">R$ {parseFloat(data.high).toFixed(3)}</span>
+          <span className="text-[9px] text-slate-400 uppercase font-bold block">Variação (R$)</span>
+          <span className={`text-sm font-bold ${varBrl >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {varBrl >= 0 ? '+' : ''}{varBrl.toFixed(4)}
+          </span>
         </div>
+        <div>
+          <span className="text-[9px] text-slate-400 uppercase font-bold block">Mínima</span>
+          <span className="text-sm font-bold text-slate-600">R$ {parseFloat(data.low).toFixed(3)}</span>
+        </div>
+        <div>
+          <span className="text-[9px] text-slate-400 uppercase font-bold block">Máxima</span>
+          <span className="text-sm font-bold text-slate-600">R$ {parseFloat(data.high).toFixed(3)}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1 text-[9px] text-slate-400 mt-4 justify-end">
+        <Clock className="w-3 h-3" />
+        Atualizado às {new Date(data.create_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
       </div>
     </div>
   );

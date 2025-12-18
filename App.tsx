@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import QuoteCard from './components/QuoteCard';
 import Chart from './components/Chart';
-import AIAnalysis from './components/AIAnalysis';
 import { fetchCurrentRate, fetchHistory } from './services/exchangeService';
 import { ExchangeRate, ChartData } from './types';
 
@@ -30,52 +28,41 @@ const App: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    
-    // Auto refresh every 30 seconds
-    const interval = setInterval(loadData, 30000);
+    const interval = setInterval(loadData, 45000); // 45s refresh
     return () => clearInterval(interval);
   }, [loadData]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
       <Header />
       
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">
-            Cotação do Dólar
+      <main className="flex-1 overflow-y-auto sm:overflow-hidden w-full max-w-4xl mx-auto px-4 py-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            Dashboard Financeiro
           </h2>
-          <p className="text-slate-500 font-medium">
-            Acompanhe o mercado financeiro em tempo real.
+          <p className="text-[11px] text-slate-400 font-medium">
+            Monitoramento em tempo real do par USD/BRL.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-12">
-            <QuoteCard 
-              data={rate} 
-              loading={loading} 
-              onRefresh={loadData} 
-            />
-          </div>
+        <div className="flex flex-col gap-4 flex-1">
+          <QuoteCard 
+            data={rate} 
+            loading={loading} 
+            onRefresh={loadData} 
+          />
 
-          <div className="lg:col-span-12">
+          <div className="flex-1 min-h-[220px]">
             <Chart data={history} />
-          </div>
-
-          <div className="lg:col-span-12 mb-10">
-            {rate && (
-              <AIAnalysis 
-                currentRate={rate.bid} 
-                pctChange={rate.pctChange} 
-              />
-            )}
           </div>
         </div>
       </main>
 
-      <footer className="py-8 border-t border-slate-200 text-center text-slate-400 text-sm">
-        <p>&copy; {new Date().getFullYear()} USD Alert. Dados via AwesomeAPI e Gemini AI.</p>
+      <footer className="py-3 border-t border-slate-100 bg-white text-center">
+        <p className="text-[10px] font-bold text-slate-300 tracking-widest uppercase">
+          Powered By JoI.A.
+        </p>
       </footer>
     </div>
   );
