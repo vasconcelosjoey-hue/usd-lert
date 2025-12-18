@@ -14,29 +14,22 @@ ReactDOM.createRoot(root).render(
   </React.StrictMode>
 );
 
-/**
- * Registro de Service Worker otimizado para evitar erros em ambientes de Sandbox/Preview.
- */
+// Registro de Service Worker otimizado
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     const isStudioPreview = 
       window.location.hostname === "ai.studio" || 
       window.location.hostname.endsWith("usercontent.goog");
 
-    // Registra o SW apenas se não estiver em ambiente de preview e o navegador suportar
     if (!isStudioPreview) {
-      navigator.serviceWorker.register("./sw.js", { scope: "./" })
-        .then(reg => {
-          console.log("USD Alert: Service Worker registrado com sucesso:", reg.scope);
-        })
+      // Em produção, o arquivo fica na raiz do build (/sw.js)
+      navigator.serviceWorker.register("/sw.js")
+        .then(reg => console.debug("PWA: Service Worker ativo"))
         .catch(err => {
-          // Ignora erros de segurança comuns em sandboxes, loga outros erros
           if (err.name !== 'SecurityError') {
-            console.error("USD Alert: Erro ao registrar SW:", err);
+            console.error("PWA: Erro no registro:", err);
           }
         });
-    } else {
-      console.log("USD Alert: Registro de Service Worker ignorado no ambiente de preview.");
     }
   });
 }
