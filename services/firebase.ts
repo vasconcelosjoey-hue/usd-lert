@@ -1,9 +1,6 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-/**
- * Acessa as variáveis de ambiente de forma segura.
- */
 const getEnv = () => {
   try {
     return (import.meta as any).env || {};
@@ -51,21 +48,19 @@ export const getFCMToken = async (): Promise<string | null> => {
   
   try {
     const hostname = window.location.hostname;
-    const isPreview = hostname.endsWith("usercontent.goog") || hostname === "ai.studio";
+    const isSandbox = hostname.includes("usercontent.goog") || hostname === "ai.studio";
     
-    // Usamos caminho relativo 'firebase-messaging-sw.js' em vez de '/...'
-    // para evitar que o navegador tente buscar na raiz do domínio de preview (ai.studio)
-    const swUrl = 'firebase-messaging-sw.js';
+    if (isSandbox) {
+      console.warn("FCM não disponível em ambiente sandbox.");
+      return null;
+    }
+
+    // Usar caminho estritamente relativo
+    const swUrl = './firebase-messaging-sw.js';
     let registration = await navigator.serviceWorker.getRegistration(swUrl);
     
     if (!registration) {
-      try {
-        registration = await navigator.serviceWorker.register(swUrl);
-      } catch (err) {
-        console.warn("Falha ao registrar SW de mensagens no preview:", err);
-        if (isPreview) return null; // Erro esperado no ambiente de sandbox do AI Studio
-        throw err;
-      }
+      registration = await navigator.serviceWorker.register(swUrl);
     }
 
     const token = await getToken(messaging, {

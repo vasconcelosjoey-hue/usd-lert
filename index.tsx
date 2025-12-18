@@ -15,29 +15,28 @@ ReactDOM.createRoot(root).render(
   </React.StrictMode>
 );
 
+// Registro robusto do Service Worker para PWA
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     const hostname = window.location.hostname;
-    // Identifica se estamos em ambiente de preview do Google AI Studio ou Localhost
-    const isStudioPreview = 
-      hostname === "ai.studio" || 
-      hostname.endsWith("usercontent.goog") ||
-      hostname.includes("localhost") ||
-      hostname.includes("127.0.0.1");
-
-    // Registra Service Workers apenas em ambiente de produção real (Vercel, etc.)
-    // No preview do AI Studio, o registro de SW costuma falhar por restrições de origem e iframe.
-    if (!isStudioPreview) {
-      // Usamos caminhos relativos para garantir que o navegador resolva a partir do diretório atual
-      navigator.serviceWorker.register("sw.js")
-        .then(() => console.debug("PWA: Main Service Worker ativo"))
-        .catch(err => console.warn("PWA SW Register ignorado no preview:", err.message));
+    
+    // Evita erro de origem cruzada no sandbox do Google AI Studio / Usercontent
+    const isSandbox = 
+      hostname.includes("usercontent.goog") || 
+      hostname.includes("ai.studio");
+    
+    // Em produção real ou localhost fora de sandbox, tentamos registrar
+    if (!isSandbox) {
+      // Usamos caminhos relativos para garantir que o SW seja buscado na origem correta do app
+      navigator.serviceWorker.register("./sw.js")
+        .then(() => console.log("PWA: Service Worker principal registrado"))
+        .catch(err => console.warn("PWA: Falha ao registrar SW principal (esperado em alguns navegadores):", err));
         
-      navigator.serviceWorker.register("firebase-messaging-sw.js")
-        .then(() => console.debug("PWA: Firebase Messaging SW ativo"))
-        .catch(err => console.warn("FCM SW Register ignorado no preview:", err.message));
+      navigator.serviceWorker.register("./firebase-messaging-sw.js")
+        .then(() => console.log("FCM: Service Worker de mensagens registrado"))
+        .catch(err => console.warn("FCM: Falha ao registrar SW de mensagens:", err));
     } else {
-      console.debug("PWA: Registro de Service Worker pulado em ambiente de desenvolvimento/preview.");
+      console.log("Ambiente Sandbox detectado: Registro de Service Worker ignorado para evitar erros de origem.");
     }
   });
 }
