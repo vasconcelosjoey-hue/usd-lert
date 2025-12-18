@@ -1,9 +1,9 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-// Dados extraídos diretamente da sua imagem do console do Firebase
+// Configuração baseada na sua última mensagem
 const firebaseConfig = {
-  apiKey: "AIzaSyAjawFDBee9Onf2ebKFAar8C0LmeJcipxs", // Corrigido: 'ee' minúsculo conforme sua foto
+  apiKey: "AIzaSyAjawFDBeE9Onf2ebkFAar8C0LmeJcipxs", 
   authDomain: "usd-alert-afd18.firebaseapp.com",
   projectId: "usd-alert-afd18",
   storageBucket: "usd-alert-afd18.firebasestorage.app",
@@ -11,7 +11,7 @@ const firebaseConfig = {
   appId: "1:357822009676:web:f2a9246e60806599493fe9"
 };
 
-// Esta chave VAPID é gerada em: Configurações do Projeto > Cloud Messaging > Web Push certificates
+// Chave VAPID extraída da sua imagem (Certificados Push da Web)
 const VAPID_KEY = "BNw9RODM3xnMOjfTJ91XA_oNMvFu4lb24pa8ZWd44UHo2Qpbo1Ol7lzXEfof_IWokxf-LWTLWYZEQ98NwE4cj-g"; 
 
 let messaging: Messaging | null = null;
@@ -52,7 +52,8 @@ export const getFCMToken = async (): Promise<string | null> => {
     }
     return null;
   } catch (error: any) {
-    console.error("Erro no Firebase com a chave:", firebaseConfig.apiKey);
+    // Se cair aqui com erro 400, a chave está certa mas a API está bloqueada no Google Cloud
+    console.error("Erro detalhado do Firebase:", error);
     throw error;
   }
 };

@@ -31,12 +31,21 @@ const Header: React.FC = () => {
         }
       }
     } catch (error: any) {
-      if (error.message?.includes('API key not valid')) {
-        alert('ERRO DE CONFIGURAÇÃO: A "Chave de API da Web" no código está incorreta. Verifique no Firebase Console > Configurações do Projeto > Geral.');
+      const errorMsg = error.message || '';
+      
+      if (errorMsg.includes('API key not valid') || errorMsg.includes('400')) {
+        alert(
+          "A chave parece correta, mas o Google está bloqueando o acesso.\n\n" +
+          "RESOLUÇÃO:\n" +
+          "1. Vá ao Google Cloud Console > APIs e Serviços > Credenciais.\n" +
+          "2. Clique na sua chave (Browser Key).\n" +
+          "3. Em 'Restrições de API', verifique se a 'Firebase Installations API' e 'Cloud Messaging' estão permitidas.\n" +
+          "4. Em 'Restrições de Aplicativo', verifique se o domínio 'usd-alert.vercel.app' está na lista."
+        );
       } else {
-        alert('Erro ao ativar: ' + (error.message || 'Verifique sua conexão.'));
+        alert('Erro: ' + errorMsg);
       }
-      console.error(error);
+      console.error("Erro completo do Firebase:", error);
     } finally {
       setLoading(false);
     }
