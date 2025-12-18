@@ -1,9 +1,9 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-// Configuração baseada na sua última mensagem
+// Configuração definitiva extraída do seu console
 const firebaseConfig = {
-  apiKey: "AIzaSyAjawFDBeE9Onf2ebkFAar8C0LmeJcipxs", 
+  apiKey: "AIzaSyCkpwisB2z2W5iCY9VYU_BE4cGZ0buv4cc", 
   authDomain: "usd-alert-afd18.firebaseapp.com",
   projectId: "usd-alert-afd18",
   storageBucket: "usd-alert-afd18.firebasestorage.app",
@@ -11,7 +11,7 @@ const firebaseConfig = {
   appId: "1:357822009676:web:f2a9246e60806599493fe9"
 };
 
-// Chave VAPID extraída da sua imagem (Certificados Push da Web)
+// Chave extraída da sua imagem "Certificados push da Web"
 const VAPID_KEY = "BNw9RODM3xnMOjfTJ91XA_oNMvFu4lb24pa8ZWd44UHo2Qpbo1Ol7lzXEfof_IWokxf-LWTLWYZEQ98NwE4cj-g"; 
 
 let messaging: Messaging | null = null;
@@ -52,8 +52,7 @@ export const getFCMToken = async (): Promise<string | null> => {
     }
     return null;
   } catch (error: any) {
-    // Se cair aqui com erro 400, a chave está certa mas a API está bloqueada no Google Cloud
-    console.error("Erro detalhado do Firebase:", error);
+    console.error("Erro FCM:", error);
     throw error;
   }
 };

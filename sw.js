@@ -1,1 +1,0 @@
-// Redundante: Use o public/sw.js
