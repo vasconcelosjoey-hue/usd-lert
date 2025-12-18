@@ -1,7 +1,8 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-// Credenciais oficiais do seu projeto "usd-alert-afd18"
+// ATENÇÃO: Verifique se esta chave em 'apiKey' é exatamente a "Chave de API da Web" 
+// que aparece em Configurações do Projeto > Geral no seu Firebase.
 const firebaseConfig = {
   apiKey: "AIzaSyAjawFDBEE9Onf2ebKFAar8C0LmeJcipxs",
   authDomain: "usd-alert-afd18.firebaseapp.com",
@@ -11,7 +12,6 @@ const firebaseConfig = {
   appId: "1:357822009676:web:f2a9246e60806599493fe9"
 };
 
-// Chave extraída da sua imagem:
 const VAPID_KEY = "BNw9RODM3xnMOjfTJ91XA_oNMvFu4lb24pa8ZWd44UHo2Qpbo1Ol7lzXEfof_IWokxf-LWTLWYZEQ98NwE4cj-g"; 
 
 let messaging: Messaging | null = null;
@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     messaging = getMessaging(app);
   } catch (e) {
-    console.warn("Navegador não suporta Push Notifications.");
+    console.error("Erro ao inicializar Firebase:", e);
   }
 }
 
@@ -31,7 +31,6 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     const permission = await Notification.requestPermission();
     return permission === 'granted';
   } catch (error) {
-    console.error("Erro ao solicitar permissão:", error);
     return false;
   }
 };
@@ -40,12 +39,8 @@ export const getFCMToken = async (): Promise<string | null> => {
   if (!messaging || !('serviceWorker' in navigator)) return null;
   
   try {
-    // Registra ou obtém o worker de mensagens
-    const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    const registration = await navigator.serviceWorker.ready;
     
-    // Espera o worker estar pronto para evitar erros de timing
-    await navigator.serviceWorker.ready;
-
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration
@@ -57,8 +52,9 @@ export const getFCMToken = async (): Promise<string | null> => {
     }
     return null;
   } catch (error) {
-    console.error("Erro ao obter token FCM:", error);
-    return null;
+    // Se cair aqui com erro 400, a API Key é inválida
+    console.error("Erro detalhado do Firebase:", error);
+    throw error;
   }
 };
 
@@ -67,9 +63,7 @@ export const deactivateNotifications = async (): Promise<void> => {
   try {
     await deleteToken(messaging);
     localStorage.removeItem('fcm_token');
-  } catch (e) {
-    console.error("Erro ao desativar notificações:", e);
-  }
+  } catch (e) {}
 };
 
 export { messaging };
