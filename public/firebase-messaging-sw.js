@@ -11,13 +11,26 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
+// Forçar ativação imediata do Service Worker
+self.addEventListener('install', () => {
+  console.log('[SW] Instalando...');
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Ativado e assumindo controle.');
+  event.waitUntil(self.clients.claim());
+});
+
 messaging.onBackgroundMessage((payload) => {
+  console.log('[SW] Mensagem recebida em background:', payload);
   const notificationTitle = payload.notification?.title || 'USD Alert';
   const notificationOptions = {
     body: payload.notification?.body || 'Nova atualização na cotação do dólar.',
     icon: 'https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=192&backgroundColor=0f172a',
     badge: 'https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=96',
-    vibrate: [200, 100, 200]
+    vibrate: [200, 100, 200],
+    data: payload.data
   };
   self.registration.showNotification(notificationTitle, notificationOptions);
 });

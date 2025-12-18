@@ -11,17 +11,16 @@ const Header: React.FC = () => {
     const savedToken = localStorage.getItem('fcm_token');
     if (savedToken) {
       setNotificationsActive(true);
-      console.log("Token ativo encontrado:", savedToken);
     }
   }, []);
 
   const handleToggleNotifications = async () => {
     setLoading(true);
+    console.log("Iniciando processo de notificação...");
     try {
       if (notificationsActive) {
         await deactivateNotifications();
         setNotificationsActive(false);
-        console.log("Notificações desativadas localmente.");
       } else {
         const granted = await requestNotificationPermission();
         if (granted) {
@@ -29,17 +28,18 @@ const Header: React.FC = () => {
           if (token) {
             setNotificationsActive(true);
             setShowSuccess(true);
-            console.log("SUCESSO! Copie este Token para o Firebase Console:");
-            console.log(token);
-            setTimeout(() => setShowSuccess(false), 3000);
+            console.log("TOKEN GERADO COM SUCESSO:", token);
+            setTimeout(() => setShowSuccess(false), 4000);
+          } else {
+            alert('Não foi possível gerar o identificador de notificações. Tente atualizar a página.');
           }
         } else {
-          alert('Permissão negada. Ative as notificações nas configurações do seu navegador.');
+          alert('Permissão de notificação negada. Verifique as configurações do seu navegador ao lado da barra de endereço.');
         }
       }
     } catch (error: any) {
-      console.error("Erro completo do Firebase:", error);
-      alert('Erro na configuração. Verifique o console para detalhes.');
+      console.error("Erro no processo de ativação:", error);
+      alert(`Falha na ativação: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
@@ -58,13 +58,14 @@ const Header: React.FC = () => {
         <div className="flex items-center gap-2">
           {showSuccess && (
             <span className="text-[10px] font-bold text-emerald-500 animate-pulse flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Token Gerado
+              <CheckCircle2 className="w-3 h-3" /> Conectado ao Firebase
             </span>
           )}
           <button 
             className={`p-2.5 rounded-full transition-all flex items-center justify-center ${notificationsActive ? 'text-accent bg-accent/10 border border-accent/20' : 'bg-slate-50 text-slate-300 border border-transparent'}`}
             onClick={handleToggleNotifications}
             disabled={loading}
+            title={notificationsActive ? "Desativar alertas" : "Ativar alertas de preço"}
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin text-accent" />
