@@ -1,8 +1,8 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-// Acesso seguro ao import.meta.env para evitar crashes em ambientes de preview
-const getEnv = () => {
+// Acesso seguro ao import.meta.env para evitar crashes em ambientes de preview ou SSR
+const getSafeEnv = () => {
   try {
     return (import.meta as any).env || {};
   } catch (e) {
@@ -10,7 +10,7 @@ const getEnv = () => {
   }
 };
 
-const env = getEnv();
+const env = getSafeEnv();
 
 const firebaseConfig = {
   apiKey: env.VITE_FIREBASE_API_KEY || "PLACEHOLDER",
