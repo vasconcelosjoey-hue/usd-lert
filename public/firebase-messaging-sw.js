@@ -1,35 +1,25 @@
-// Service Worker nativo para Push Notifications
-self.addEventListener('push', (event) => {
-  if (event.data) {
-    try {
-      const data = event.data.json();
-      const notificationTitle = data.notification?.title || 'USD Alert';
-      const notificationOptions = {
-        body: data.notification?.body || 'Nova atualização de cotação disponível.',
-        icon: data.notification?.icon || 'https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=192&backgroundColor=0f172a',
-        data: data.data
-      };
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
 
-      event.waitUntil(
-        self.registration.showNotification(notificationTitle, notificationOptions)
-      );
-    } catch (e) {
-      console.error('Erro ao processar push event:', e);
-    }
-  }
-});
+// Os valores serão injetados via variáveis de ambiente durante o deploy no Vercel
+// Para desenvolvimento, o script lida com a ausência de chaves graciosamente.
+const firebaseConfig = {
+  apiKey: "PLACEHOLDER",
+  projectId: "PLACEHOLDER",
+  messagingSenderId: "PLACEHOLDER",
+  appId: "PLACEHOLDER"
+};
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      if (clientList.length > 0) {
-        return clientList[0].focus();
-      }
-      return self.clients.openWindow('/');
-    })
-  );
-});
+if (firebaseConfig.apiKey !== "PLACEHOLDER") {
+  firebase.initializeApp(firebaseConfig);
+  const messaging = firebase.messaging();
 
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+  messaging.onBackgroundMessage((payload) => {
+    const notificationTitle = payload.notification?.title || 'USD Alert';
+    const notificationOptions = {
+      body: payload.notification?.body || 'Atualização na cotação do dólar.',
+      icon: 'https://api.dicebear.com/7.x/bottts/png?seed=usd-192&size=192'
+    };
+    self.registration.showNotification(notificationTitle, notificationOptions);
+  });
+}

@@ -1,25 +1,53 @@
-import React, { useState } from 'react';
-import { DollarSign, Bell, BellOff, Loader2 } from 'lucide-react';
-import { requestNotificationToken } from '../services/firebase';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, Bell, BellOff, Loader2, Settings2 } from 'lucide-react';
+import { requestNotificationPermission, getFCMToken, deactivateNotifications } from '../services/firebase';
 
 const Header: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [notificationsActive, setNotificationsActive] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [threshold, setThreshold] = useState('0.30');
 
-  const handleNotificationRequest = async () => {
+  useEffect(() => {
+    const savedToken = localStorage.getItem('fcm_token');
+    const savedThreshold = localStorage.getItem('alert_threshold');
+    if (savedToken) setNotificationsActive(true);
+    if (savedThreshold) setThreshold(savedThreshold);
+  }, []);
+
+  const handleToggleNotifications = async () => {
     setLoading(true);
     try {
-      const token = await requestNotificationToken();
-      if (token) {
-        console.log('FCM Token:', token);
-        alert('Notificações ativadas com sucesso! Token gerado (veja o console para detalhes).');
+      if (notificationsActive) {
+        await deactivateNotifications();
+        setNotificationsActive(false);
+        alert('Alertas desativados.');
       } else {
-        alert('Permissão de notificação negada ou erro ao gerar token.');
+        const granted = await requestNotificationPermission();
+        if (granted) {
+          const token = await getFCMToken();
+          if (token) {
+            setNotificationsActive(true);
+            alert('Alertas push ativados!');
+          } else {
+            alert('Falha ao obter token. Verifique as configurações do Firebase.');
+          }
+        } else {
+          alert('Permissão de notificação negada pelo navegador.');
+        }
       }
     } catch (error) {
-      alert('Erro ao configurar notificações.');
+      console.error(error);
+      alert('Erro técnico ao configurar notificações.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setThreshold(val);
+    localStorage.setItem('alert_threshold', val);
   };
 
   return (
@@ -32,19 +60,54 @@ const Header: React.FC = () => {
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">USD Alert</h1>
         </div>
         
-        <button 
-          className={`p-2 rounded-full transition-all ${loading ? 'bg-slate-100' : 'hover:bg-slate-100 text-slate-600 hover:text-slate-900'}`}
-          onClick={handleNotificationRequest}
-          disabled={loading}
-          title="Ativar alertas de cotação"
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin text-accent" />
-          ) : (
-            <Bell className="w-5 h-5" />
+        <div className="flex items-center gap-2">
+          {notificationsActive && (
+            <button 
+              onClick={() => setShowSettings(!showSettings)}
+              className={`p-2 rounded-full transition-colors ${showSettings ? 'bg-accent/10 text-accent' : 'hover:bg-slate-100 text-slate-600'}`}
+              title="Ajustar Limiar de Alerta"
+            >
+              <Settings2 className="w-5 h-5" />
+            </button>
           )}
-        </button>
+          
+          <button 
+            className={`p-2 rounded-full transition-all flex items-center justify-center ${loading ? 'bg-slate-100' : notificationsActive ? 'text-accent bg-accent/10' : 'hover:bg-slate-100 text-slate-400'}`}
+            onClick={handleToggleNotifications}
+            disabled={loading}
+            title={notificationsActive ? "Desativar alertas push" : "Ativar alertas push"}
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin text-accent" />
+            ) : notificationsActive ? (
+              <Bell className="w-5 h-5" />
+            ) : (
+              <BellOff className="w-5 h-5" />
+            )}
+          </button>
+        </div>
       </div>
+
+      {showSettings && notificationsActive && (
+        <div className="bg-white border-b border-slate-200 animate-in">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <label className="text-sm font-medium text-slate-600">
+              Notificar se variar mais que:
+            </label>
+            <div className="flex items-center gap-2">
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0.01"
+                value={threshold} 
+                onChange={handleThresholdChange}
+                className="w-20 px-2 py-1 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+              />
+              <span className="text-sm font-bold text-slate-400">%</span>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

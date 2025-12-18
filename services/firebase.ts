@@ -1,53 +1,87 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
-import { getMessaging, Messaging, getToken } from "firebase/messaging";
+import { getMessaging, Messaging, getToken, deleteToken } from "firebase/messaging";
 
-// Substitua por suas chaves reais do Firebase Console
+// Acesso seguro ao import.meta.env para evitar crashes em ambientes de preview
+const getEnv = () => {
+  try {
+    return (import.meta as any).env || {};
+  } catch (e) {
+    return {};
+  }
+};
+
+const env = getEnv();
+
 const firebaseConfig = {
-  apiKey: "PLACEHOLDER",
-  authDomain: "PLACEHOLDER",
-  projectId: "PLACEHOLDER",
-  storageBucket: "PLACEHOLDER",
-  messagingSenderId: "PLACEHOLDER",
-  appId: "PLACEHOLDER"
+  apiKey: env.VITE_FIREBASE_API_KEY || "PLACEHOLDER",
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || "PLACEHOLDER",
+  projectId: env.VITE_FIREBASE_PROJECT_ID || "PLACEHOLDER",
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || "PLACEHOLDER",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || "PLACEHOLDER",
+  appId: env.VITE_FIREBASE_APP_ID || "PLACEHOLDER"
 };
 
 const isConfigured = firebaseConfig.apiKey !== "PLACEHOLDER";
-
-let app;
 let messaging: Messaging | null = null;
 
-if (isConfigured) {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  if (typeof window !== 'undefined') {
-    try {
-      messaging = getMessaging(app);
-    } catch (e) {
-      console.warn("Firebase Messaging não suportado.");
-    }
+if (isConfigured && typeof window !== 'undefined') {
+  try {
+    const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    messaging = getMessaging(app);
+  } catch (e) {
+    console.warn("Firebase Messaging não suportado neste navegador.");
   }
 }
 
-export const requestNotificationToken = async (): Promise<string | null> => {
-  if (!isConfigured) {
-    console.warn("Firebase não configurado. Configure as chaves em services/firebase.ts");
-    return null;
+export const requestNotificationPermission = async (): Promise<boolean> => {
+  if (typeof Notification === 'undefined') return false;
+  try {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  } catch (error) {
+    console.error("Erro ao solicitar permissão:", error);
+    return false;
   }
+};
 
+export const getFCMToken = async (): Promise<string | null> => {
   if (!messaging || !('serviceWorker' in navigator)) return null;
   
   try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      const token = await getToken(messaging, {
-        vapidKey: 'YOUR_VAPID_KEY'
-      });
+    const swUrl = '/firebase-messaging-sw.js';
+    let registration = await navigator.serviceWorker.getRegistration(swUrl);
+    
+    if (!registration) {
+      registration = await navigator.serviceWorker.register(swUrl);
+    }
+
+    const token = await getToken(messaging, {
+      vapidKey: env.VITE_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration: registration
+    });
+    
+    if (token) {
+      localStorage.setItem('fcm_token', token);
       return token;
     }
     return null;
   } catch (error) {
-    console.error("Erro FCM:", error);
+    console.error("Erro ao obter token FCM:", error);
     return null;
   }
 };
 
-export { app as firebaseApp, messaging };
+export const deactivateNotifications = async (): Promise<void> => {
+  if (!messaging) return;
+  try {
+    const currentToken = localStorage.getItem('fcm_token');
+    if (currentToken) {
+      await deleteToken(messaging);
+      localStorage.removeItem('fcm_token');
+    }
+  } catch (error) {
+    console.error("Erro ao desativar notificações:", error);
+  }
+};
+
+export { messaging };
