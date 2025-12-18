@@ -1,22 +1,36 @@
-import { initializeApp, getApp, getApps } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getMessaging, getToken, deleteToken, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCkpwisB2z2W5iCY9VYU_BE4cGZ0buv4cc", 
-  authDomain: "usd-alert-afd18.firebaseapp.com",
-  projectId: "usd-alert-afd18",
-  storageBucket: "usd-alert-afd18.firebasestorage.app",
-  messagingSenderId: "357822009676",
-  appId: "1:357822009676:web:f2a9246e60806599493fe9"
+  apiKey: (import.meta as any).env.VITE_FIREBASE_API_KEY || "", 
+  authDomain: (import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: (import.meta as any).env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: (import.meta as any).env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: (import.meta as any).env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: (import.meta as any).env.VITE_FIREBASE_APP_ID || ""
 };
 
-// Inicializa o App do Firebase uma única vez
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+if (!firebaseConfig.apiKey) {
+  console.warn("Missing VITE_FIREBASE_API_KEY (configure env on Vercel / local).");
+}
 
-const VAPID_KEY = "BNw9RODM3xnMOjfTJ91XA_oNMvFu4lb24pa8ZWd44UHo2Qpbo1Ol7lzXEfof_IWokxf-LWTLWYZEQ98NwE4cj-g"; 
+// VAPID KEY via env
+const VAPID_KEY = (import.meta as any).env.VITE_FIREBASE_VAPID_KEY || "";
+
+// Inicializa o App do Firebase uma única vez
+export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 /**
- * Verifica se o Messaging é suportado no navegador atual
+ * Messaging só quando suportado (evita quebrar em ambientes que não suportam)
+ */
+export async function getFirebaseMessaging() {
+  const supported = await isSupported();
+  if (!supported) return null;
+  return getMessaging(app);
+}
+
+/**
+ * Helpers para a UI (Header.tsx)
  */
 export const isMessagingSupported = async () => {
   try {
@@ -37,15 +51,11 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 };
 
 export const getFCMToken = async (): Promise<string | null> => {
-  const supported = await isMessagingSupported();
-  if (!supported) {
-    console.warn("FCM Messaging não é suportado neste navegador.");
-    return null;
-  }
+  const messaging = await getFirebaseMessaging();
+  if (!messaging) return null;
   
   try {
-    const messaging = getMessaging(app);
-    // Aguarda o Service Worker estar pronto antes de pedir o token
+    // Registra ou obtém o Service Worker atual
     const registration = await navigator.serviceWorker.ready;
     
     const token = await getToken(messaging, {
@@ -60,19 +70,15 @@ export const getFCMToken = async (): Promise<string | null> => {
     return null;
   } catch (error: any) {
     console.error("Erro ao obter token FCM:", error);
-    if (error.code === 'messaging/unsupported-browser' || error.message?.includes('not available')) {
-      return null;
-    }
-    throw error;
+    return null;
   }
 };
 
 export const deactivateNotifications = async (): Promise<void> => {
-  const supported = await isMessagingSupported();
-  if (!supported) return;
+  const messaging = await getFirebaseMessaging();
+  if (!messaging) return;
   
   try {
-    const messaging = getMessaging(app);
     await deleteToken(messaging);
     localStorage.removeItem('fcm_token');
   } catch (e) {
